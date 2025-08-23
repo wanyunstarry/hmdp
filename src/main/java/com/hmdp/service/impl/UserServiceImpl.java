@@ -128,6 +128,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
                 throw new RuntimeException(e);
             }
         }
+        // 6.2.将User对象转为Hash存储
+        Map<String, Object> map1 = JSON.parseObject(JSON.toJSONString(userDTO), Map.class);
 
         // 6.3.存储
         String tokenKey = RedisConstants.LOGIN_USER_KEY + token;

@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.hmdp.constant.RedisConstants;
 import com.hmdp.context.BaseContext;
 import com.hmdp.dto.UserDTO;
+import io.netty.util.internal.StringUtil;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -35,7 +36,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
 
         // 1.获取请求头中的token
         String token = request.getHeader("authorization");
-        if (token == null) {
+        if (token == null || token.length() == 0) {
             return true;
         }
         // 2.基于TOKEN获取redis中的用户
@@ -45,7 +46,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         if (map == null) {
             return true;
         }
-        
+
         // 4.将查询到的hash数据转为UserDTO
         UserDTO userDTO = JSON.parseObject(JSON.toJSONString(map), UserDTO.class);
         //5.存在，保存用户信息到Threadlocal
