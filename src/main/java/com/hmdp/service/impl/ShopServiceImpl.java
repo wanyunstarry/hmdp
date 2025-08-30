@@ -38,16 +38,24 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             Shop shop = JSON.parseObject(shopJson, Shop.class);
             return Result.ok(shop);
         }
+        //判断缓存的是否为空字符串
+        //直接用==""判断不行，因为这个比较的是引用地址，而且shopJson可能为null造成NullPointerException
+        if ("".equals(shopJson)) {
+            return Result.fail("店铺不存在");
+        }
         //4.不存在，根据id查询数据库
         Shop shop = getById(id);
         //5.判断在数据库中是否存在
         if (shop == null) {
+            //将空字符串写入redis
+            stringRedisTemplate.opsForValue().set(key, "", RedisConstants.CACHE_NULL_TTL, TimeUnit.MINUTES);
             return Result.fail("店铺不存在");
         }
         //6.存在，写入redis
         stringRedisTemplate.opsForValue().set(key, JSON.toJSONString(shop), RedisConstants.CACHE_SHOP_TTL, TimeUnit.MINUTES);
         return Result.ok(shop);
     }
+
 
     @Transactional
     public Result update(Shop shop) {
