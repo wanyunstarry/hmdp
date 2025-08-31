@@ -6,7 +6,7 @@ import com.hmdp.helper.RegexPatterns;
 /**
  * @author 虎哥
  */
-public class RegexUtils {
+public class RegexUtil {
     /**
      * 是否是无效手机格式
      *

@@ -2,8 +2,9 @@ package com.hmdp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
+
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.hmdp.constant.RedisConstants;
 import com.hmdp.entity.Shop;
 import com.hmdp.helper.RedisData;
@@ -11,6 +12,7 @@ import com.hmdp.mapper.ShopMapper;
 import com.hmdp.result.Result;
 import com.hmdp.service.IShopService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.hmdp.utils.CacheUtil;
 import io.netty.util.internal.StringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -23,6 +25,7 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 /**
  * <p>
@@ -38,9 +41,14 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    @Autowired
+    private CacheUtil cacheUtil;
+
     public Result queryById(Long id) {
         //解决缓存穿透
         //   Shop shop = queryWithPassThrough(id);
+//        Shop shop = cacheUtil.queryWithPassThrough(RedisConstants.CACHE_SHOP_KEY, id, Shop.class,
+//                this::getById, RedisConstants.CACHE_SHOP_TTL, TimeUnit.MINUTES);
 
         //互斥锁解决缓存击穿
 //        Shop shop = queryWithMutex(id);
@@ -48,10 +56,13 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
 //            return Result.fail("店铺不存在");
 //        }
         //逻辑过期解决缓存击穿
-        Shop shop = queryWithLogicalExpire(id);
+//        Shop shop = queryWithLogicalExpire(id);
+        Shop shop = cacheUtil.queryWithLogicalExpire(RedisConstants.CACHE_SHOP_KEY, id, Shop.class, this::getById,
+                20L, TimeUnit.SECONDS);
         if (shop == null) {
             return Result.fail("店铺不存在");
         }
+
         return Result.ok(shop);
     }
 
