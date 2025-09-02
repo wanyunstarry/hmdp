@@ -9,6 +9,7 @@ import com.hmdp.service.ISeckillVoucherService;
 import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.RedisIdUtil;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,9 +38,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
      * @param voucherId
      * @return
      */
-    @Transactional
-    public Result
-    seckillVoucher(Long voucherId) {
+
+    public Result seckillVoucher(Long voucherId) {
         // 1.查询优惠券
         SeckillVoucher seckillVoucher = seckillVoucherService.getById(voucherId);
         // 2.判断秒杀是否开始
@@ -54,7 +54,28 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (seckillVoucher.getStock() < 1) {
             return Result.fail("库存不足");
         }
-        //5，扣减库存
+        // 5.一人一单逻辑
+        Long userId = BaseContext.getUser().getId();
+        synchronized (userId.toString().intern()) {
+            IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
+            return proxy.createVoucherOrder(voucherId);
+        }
+    }
+
+    @Transactional
+    public Result createVoucherOrder(Long voucherId) {
+        // 5.一人一单逻辑
+        // 5.1.用户id
+        Long userId = BaseContext.getUser().getId();
+        VoucherOrder voucherOrder;
+        Long count = query().eq("voucher_id", voucherId).eq("user_id", userId).count();
+        // 5.2.判断是否存在
+        if (count > 0) {
+            return Result.fail("用户已经购买过一次！");
+        }
+
+        //6，扣减库存
+        //这里悲观锁只针对同一个用户，不同用户之间是没有悲观锁的，该有的秒杀卷的数量的高并发情况下的数据安全问题照样有，所以照样要加乐观锁
         boolean success = seckillVoucherService.update()
                 .setSql("stock= stock -1") //set stock = stock -1
                 .eq("voucher_id", voucherId)
@@ -66,14 +87,15 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (!success) {
             return Result.fail("库存不足");
         }
-        //6.创建订单
-        VoucherOrder voucherOrder = VoucherOrder.builder()
+        //7.创建订单
+        voucherOrder = VoucherOrder.builder()
                 .userId(BaseContext.getUser().getId())
                 .id(redisIdUtil.getId("order"))
                 .voucherId(voucherId)
                 .build();
 
         save(voucherOrder);
+
 
         return Result.ok(voucherOrder.getId());
     }

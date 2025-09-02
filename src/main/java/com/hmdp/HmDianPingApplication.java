@@ -3,6 +3,7 @@ package com.hmdp;
 import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 /**
  * Dao接口要想被容器扫描到，有两种解决方案:
@@ -13,6 +14,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * * 该方案的好处是只需要写一次，则指定包下的所有Dao接口都能被扫描到，`@Mapper`就可以不写。
  */
 @MapperScan("com.hmdp.mapper")
+@EnableAspectJAutoProxy(exposeProxy = true)
 @SpringBootApplication
 public class HmDianPingApplication {
 
