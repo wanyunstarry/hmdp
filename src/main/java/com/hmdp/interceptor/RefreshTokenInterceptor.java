@@ -1,6 +1,6 @@
 package com.hmdp.interceptor;
 
-import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson.JSON;
 import com.hmdp.constant.RedisConstants;
 import com.hmdp.context.BaseContext;
 import com.hmdp.dto.UserDTO;
