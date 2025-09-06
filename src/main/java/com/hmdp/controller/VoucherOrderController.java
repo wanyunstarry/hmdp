@@ -26,6 +26,7 @@ public class VoucherOrderController {
     @Autowired
     private IVoucherOrderService iVoucherOrderService;
 
+    //优惠劵下单
     @PostMapping("seckill/{id}")
     public Result seckillVoucher(@PathVariable("id") Long voucherId) {
         return iVoucherOrderService.seckillVoucher(voucherId);

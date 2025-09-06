@@ -1,5 +1,6 @@
 package com.hmdp.service.impl;
 
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -25,7 +26,6 @@ import javax.servlet.http.HttpSession;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -113,7 +113,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         UserDTO userDTO = new UserDTO();
         BeanUtils.copyProperties(user, userDTO);
         // 6.1.随机生成token，作为登录令牌
-        String token = UUID.randomUUID().toString();
+        String token = UUID.randomUUID().toString(true);
         // 6.2.将User对象转为Hash存储
         Map<String, Object> map = new HashMap<>();
         Class<UserDTO> aClass = UserDTO.class;
