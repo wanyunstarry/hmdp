@@ -1,12 +1,16 @@
 package com.hmdp;
 
+import com.hmdp.config.RedissionConfig;
 import com.hmdp.constant.RedisConstants;
 import com.hmdp.entity.Shop;
 import com.hmdp.service.IShopService;
 import com.hmdp.service.impl.ShopServiceImpl;
 import com.hmdp.utils.CacheUtil;
 import com.hmdp.utils.RedisIdUtil;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -26,6 +30,10 @@ class HmDianPingApplicationTests {
 
     @Autowired
     RedisIdUtil redisIdUtil;
+
+    @Autowired
+    RedissonClient redissonClient;
+
 
     @Test
     void testSaveShop() throws InterruptedException {
@@ -77,5 +85,17 @@ class HmDianPingApplicationTests {
         System.out.println("time = " + (end - begin));
     }
 
+    private RLock lock;
+
+    @BeforeEach
+    void setUp() {
+        lock = redissonClient.getLock("order");
+    }
+
+    @Test
+    void testRedission() throws InterruptedException {
+        boolean b = lock.tryLock(1L, TimeUnit.SECONDS);
+
+    }
 
 }

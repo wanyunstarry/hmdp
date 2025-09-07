@@ -10,6 +10,8 @@ import com.hmdp.service.IVoucherOrderService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.utils.RedisIdUtil;
 import com.hmdp.utils.SimpleRedisLockUtil;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -36,6 +39,9 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
 
     @Autowired
     StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    RedissonClient redissonClient;
 
     /**
      * 优惠卷下单
@@ -61,10 +67,12 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
         // 5.一人一单逻辑
         Long userId = BaseContext.getUser().getId();
-        //创建锁对象(新增代码)
-        SimpleRedisLockUtil simpleRedisLockUtil = new SimpleRedisLockUtil(stringRedisTemplate, "order" + userId);
+        //创建锁对象
+        //SimpleRedisLockUtil simpleRedisLockUtil = new SimpleRedisLockUtil
+        //(stringRedisTemplate, "order:" + userId);
+        RLock lock = redissonClient.getLock("order:" + userId);
         //尝试获取锁
-        boolean isLock = simpleRedisLockUtil.tryLock(1200);
+        boolean isLock = lock.tryLock();//无参，失败直接返回false
         if (!isLock) {
             return Result.fail("同一用户只允许下一单");
         }
@@ -73,7 +81,7 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             IVoucherOrderService proxy = (IVoucherOrderService) AopContext.currentProxy();
             return proxy.createVoucherOrder(voucherId);
         } finally {
-            simpleRedisLockUtil.unlock();
+            lock.unlock();
         }
 
     }
@@ -91,7 +99,8 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
 
         //6，扣减库存
-        //这里悲观锁只针对同一个用户，不同用户之间是没有悲观锁的，该有的秒杀卷的数量的高并发情况下的数据安全问题照样有，所以照样要加乐观锁
+        //这里悲观锁只针对同一个用户，不同用户之间是没有悲观锁的，
+        //该有的秒杀卷的数量的高并发情况下的数据安全问题照样有，所以照样要加乐观锁
         boolean success = seckillVoucherService.update()
                 .setSql("stock= stock -1") //set stock = stock -1
                 .eq("voucher_id", voucherId)
