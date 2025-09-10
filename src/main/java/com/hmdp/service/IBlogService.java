@@ -2,10 +2,11 @@ package com.hmdp.service;
 
 import com.hmdp.entity.Blog;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.hmdp.result.Result;
 
 /**
  * <p>
- *  服务类
+ * 服务类
  * </p>
  *
  * @author 虎哥
@@ -13,4 +14,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface IBlogService extends IService<Blog> {
 
+    Result queryBlogById(Long id);
+
+    Result queryHotBlog(Integer current);
+
+    Result likeBlog(Long id);
+
+    Result queryBlogLikes(Long id);
 }

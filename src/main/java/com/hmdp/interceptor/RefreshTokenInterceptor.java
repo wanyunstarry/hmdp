@@ -33,6 +33,7 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
      */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        //用户主动退出或浏览器关闭导致 localStorage 被清除。  Token 存储方式问题
 
         // 1.获取请求头中的token
         String token = request.getHeader("authorization");
@@ -52,7 +53,6 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
         //5.存在，保存用户信息到Threadlocal
         BaseContext.saveUser(userDTO);
         // 6.刷新token有效期
-
         stringRedisTemplate.expire(tokenKey, RedisConstants.LOGIN_USER_TTL, TimeUnit.HOURS);
 
         //7.放行
