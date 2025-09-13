@@ -17,5 +17,6 @@ import java.util.List;
  */
 public interface BlogMapper extends BaseMapper<Blog> {
 
-    List<User> queryBlogLikes(List<Long> list);
+
+    List<Blog> queryBlogByIds(List<Long> ids);
 }

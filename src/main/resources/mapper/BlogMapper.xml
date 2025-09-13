@@ -3,16 +3,16 @@
 <mapper namespace="com.hmdp.mapper.BlogMapper">
 
 
-    <select id="queryBlogLikes" resultType="com.hmdp.entity.User">
+    <select id="queryBlogByIds" resultType="com.hmdp.entity.Blog">
         select *
-        from tb_user
+        from tb_blog
         where id in
-        <foreach collection="list" item="userID" open="(" close=")" separator=",">
-            #{userID}
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
         </foreach>
         order by field (id,
-        <foreach collection="list" item="userID" separator=",">
-            #{userID}
+        <foreach collection="ids" item="id" separator=",">
+            #{id}
         </foreach>
         )
     </select>
